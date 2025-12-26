@@ -459,10 +459,10 @@
             <div class="logo">Zobaczyć Matematykę</div>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
             <ul class="nav-links" id="navLinks">
-                <li><a onclick="showView('home')" class="active">Główna</a></li>
-                <li><a onclick="showView('theory')">Teoria</a></li>
-                <li><a onclick="showView('visualization')">Wizualizacja</a></li>
-                <li><a onclick="showView('contact')">Kontakt</a></li>
+                <li><a onclick="showView('home', event)" class="active">Główna</a></li>
+                <li><a onclick="showView('theory', event)">Teoria</a></li>
+                <li><a onclick="showView('visualization', event)">Wizualizacja</a></li>
+                <li><a onclick="showView('contact', event)">Kontakt</a></li>
             </ul>
         </div>
     </nav>
@@ -628,7 +628,7 @@
 
     <script>
         // Navigation
-        function showView(viewId) {
+        function showView(viewId, event) {
             // Hide all views
             document.querySelectorAll('.view').forEach(view => {
                 view.classList.remove('active');
@@ -641,7 +641,10 @@
             document.querySelectorAll('.nav-links a').forEach(link => {
                 link.classList.remove('active');
             });
-            event.target.classList.add('active');
+            
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
             
             // Close mobile menu
             document.getElementById('navLinks').classList.remove('active');
@@ -822,7 +825,7 @@
                         imageData.data[index + 1] = g;
                         imageData.data[index + 2] = b;
                         imageData.data[index + 3] = 255;
-                    }}
+                    }
                 }
                 
                 this.ctx.putImageData(imageData, 0, 0);
