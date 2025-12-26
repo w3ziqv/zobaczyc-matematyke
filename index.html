@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zobaczyć Matematykę - Konkurs Matematyczny</title>
+    <title>Zobaczyć Matematykę - Interaktywna Wizualizacja Zbioru Mandelbrota</title>
+    <meta name="description" content="Odkryj piękno matematyki przez interaktywną wizualizację zbioru Mandelbrota. Eksploruj fraktale, liczby zespolone i nieskończoność.">
+    <meta name="keywords" content="fraktal, Mandelbrot, matematyka, liczby zespolone, wizualizacja, konkurs">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌀</text></svg>">
     <style>
         * {
             margin: 0;
@@ -137,6 +140,11 @@
             transform: translateY(-2px);
         }
 
+        .btn-small {
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -236,6 +244,59 @@
             border-radius: 16px;
             cursor: crosshair;
             display: block;
+            transition: opacity 0.3s;
+        }
+
+        #fractalCanvas.loading {
+            opacity: 0.5;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            display: none;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .coordinates {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+            color: #4a5568;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .controls {
@@ -323,25 +384,56 @@
             min-width: 120px;
         }
 
-        .contact-content {
-            background: white;
-            padding: 3rem;
-            border-radius: 24px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 80px;
+        .preset-locations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .preset-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #1a1a1a;
+            color: #fff;
             text-align: center;
+            border-radius: 8px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
         }
 
-        .contact-content h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            color: #1a1a1a;
-        }
-
-        .contact-content p {
-            color: #4a5568;
-            line-height: 1.8;
-            font-size: 1.1rem;
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
 
         .view {
@@ -437,6 +529,10 @@
             .control-buttons button {
                 min-width: 100%;
             }
+
+            .preset-locations {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -449,7 +545,6 @@
                 <li><a onclick="showView('home', event)" class="active">Główna</a></li>
                 <li><a onclick="showView('theory', event)">Teoria</a></li>
                 <li><a onclick="showView('visualization', event)">Wizualizacja</a></li>
-                <li><a onclick="showView('contact', event)">Kontakt</a></li>
             </ul>
         </div>
     </nav>
@@ -551,50 +646,55 @@
             <div class="visualization-container">
                 <h2 style="margin-bottom: 1.5rem; color: #1a1a1a;">Interaktywna wizualizacja</h2>
                 <p style="color: #718096; margin-bottom: 1.5rem;">
-                    Kliknij na obraz, aby przybliżyć wybrany obszar. Użyj kontrolek poniżej, aby dostosować parametry renderowania.
+                    Kliknij aby przybliżyć, użyj scrollu do zoomu, przeciągaj aby przesunąć widok.
                 </p>
-                <canvas id="fractalCanvas"></canvas>
+                
+                <div class="canvas-wrapper">
+                    <canvas id="fractalCanvas"></canvas>
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="spinner"></div>
+                        <span>Renderowanie...</span>
+                    </div>
+                    <div class="coordinates" id="coordinates">x: 0.000, y: 0.000, zoom: 1x</div>
+                </div>
                 
                 <div class="controls">
                     <div class="control-group">
-                        <label>Maksymalna liczba iteracji: <span id="iterValue">100</span></label>
+                        <label class="tooltip">Maksymalna liczba iteracji: <span id="iterValue">100</span>
+                            <span class="tooltiptext">Większa wartość = więcej szczegółów (wolniejsze)</span>
+                        </label>
                         <input type="range" id="iterations" min="50" max="500" value="100" step="10">
                     </div>
                     
                     <div class="control-group">
-                        <label>Paleta kolorów:</label>
+                        <label class="tooltip">Paleta kolorów:
+                            <span class="tooltiptext">Różne palety ujawniają różne struktury</span>
+                        </label>
                         <select id="colorPalette">
                             <option value="classic">Klasyczna</option>
                             <option value="rainbow">Tęczowa</option>
                             <option value="fire">Ogień</option>
                             <option value="ocean">Ocean</option>
                             <option value="grayscale">Czarno-biała</option>
+                            <option value="sunset">Zachód słońca</option>
                         </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Ciekawe lokacje:</label>
+                        <div class="preset-locations">
+                            <button class="preset-btn" onclick="fractalApp.goToPreset(0)">🌀 Główny zbiór</button>
+                            <button class="preset-btn" onclick="fractalApp.goToPreset(1)">🌊 Dolina morskich koników</button>
+                            <button class="preset-btn" onclick="fractalApp.goToPreset(2)">⚡ Spirale elektryczne</button>
+                            <button class="preset-btn" onclick="fractalApp.goToPreset(3)">🌲 Drzewo miniatur</button>
+                        </div>
                     </div>
                     
                     <div class="control-buttons">
                         <button class="btn btn-primary" onclick="fractalApp.reset()">Resetuj widok</button>
-                        <button class="btn btn-primary" onclick="fractalApp.render()">Przerysuj</button>
+                        <button class="btn btn-primary" onclick="fractalApp.zoomOut()">Oddal (Zoom Out)</button>
+                        <button class="btn btn-primary" onclick="fractalApp.downloadImage()">Pobierz obraz PNG</button>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="contact" class="view">
-        <div class="container">
-            <div class="contact-content">
-                <h2>Kontakt</h2>
-                <p style="margin-bottom: 2rem;">
-                    Projekt "Zobaczyć Matematykę" to konkurs mający na celu pokazanie piękna i elegancji matematyki 
-                    poprzez interaktywne wizualizacje.
-                </p>
-                <p>
-                    <strong>Email:</strong> kontakt@zobaczyc-matematyke.pl<br>
-                    <strong>Organizator:</strong> Zespół Matematyki Wizualnej
-                </p>
-                <div style="margin-top: 3rem;">
-                    <a class="btn btn-primary" onclick="showView('visualization')">Wróć do wizualizacji</a>
                 </div>
             </div>
         </div>
@@ -645,6 +745,16 @@
             centerY: 0,
             zoom: 1,
             maxIterations: 100,
+            isDragging: false,
+            lastX: 0,
+            lastY: 0,
+            
+            presets: [
+                { x: -0.5, y: 0, zoom: 1, name: "Główny zbiór" },
+                { x: -0.743643887037151, y: 0.13182590420533, zoom: 100000, name: "Dolina morskich koników" },
+                { x: -0.7269, y: 0.1889, zoom: 10000, name: "Spirale elektryczne" },
+                { x: -0.1592, y: -1.0317, zoom: 1000, name: "Drzewo miniatur" }
+            ],
             
             palettes: {
                 classic: (n, max) => {
@@ -679,6 +789,15 @@
                     if (n === max) return [0, 0, 0];
                     const value = Math.floor(255 * (n / max));
                     return [value, value, value];
+                },
+                sunset: (n, max) => {
+                    if (n === max) return [0, 0, 0];
+                    const t = n / max;
+                    return [
+                        Math.floor(255 * Math.sin(t * Math.PI)),
+                        Math.floor(100 * t),
+                        Math.floor(150 * (1 - t))
+                    ];
                 }
             },
             
@@ -689,7 +808,14 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.resize();
                 window.addEventListener('resize', () => this.resize());
+                
                 this.canvas.addEventListener('click', (e) => this.handleClick(e));
+                this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', () => this.isDragging = false);
+                this.canvas.addEventListener('mouseleave', () => this.isDragging = false);
+                
                 document.getElementById('iterations').addEventListener('input', (e) => {
                     this.maxIterations = parseInt(e.target.value);
                     document.getElementById('iterValue').textContent = e.target.value;
@@ -698,6 +824,7 @@
                     this.currentPalette = e.target.value;
                     this.render();
                 });
+                
                 this.initialized = true;
                 this.render();
             },
@@ -723,6 +850,55 @@
                 this.centerX = clickX;
                 this.centerY = clickY;
                 this.zoom *= 2;
+                this.updateCoordinates();
+                this.render();
+            },
+
+            handleWheel(e) {
+                e.preventDefault();
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const scale = 3 / this.zoom;
+                const aspectRatio = this.width / this.height;
+                const mouseX = this.centerX + (x / rect.width - 0.5) * scale * aspectRatio;
+                const mouseY = this.centerY + (y / rect.height - 0.5) * scale;
+                
+                const zoomFactor = e.deltaY < 0 ? 1.2 : 0.8333;
+                this.zoom *= zoomFactor;
+                
+                const newScale = 3 / this.zoom;
+                this.centerX = mouseX - (x / rect.width - 0.5) * newScale * aspectRatio;
+                this.centerY = mouseY - (y / rect.height - 0.5) * newScale;
+                
+                this.updateCoordinates();
+                this.render();
+            },
+
+            handleMouseDown(e) {
+                this.isDragging = true;
+                this.lastX = e.clientX;
+                this.lastY = e.clientY;
+                this.canvas.style.cursor = 'grabbing';
+            },
+
+            handleMouseMove(e) {
+                if (!this.isDragging) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const dx = e.clientX - this.lastX;
+                const dy = e.clientY - this.lastY;
+                
+                const scale = 3 / this.zoom;
+                const aspectRatio = this.width / this.height;
+                
+                this.centerX -= (dx / rect.width) * scale * aspectRatio;
+                this.centerY -= (dy / rect.height) * scale;
+                
+                this.lastX = e.clientX;
+                this.lastY = e.clientY;
+                
+                this.updateCoordinates();
                 this.render();
             },
             
@@ -730,7 +906,36 @@
                 this.centerX = -0.5;
                 this.centerY = 0;
                 this.zoom = 1;
+                this.canvas.style.cursor = 'crosshair';
+                this.updateCoordinates();
                 this.render();
+            },
+
+            zoomOut() {
+                this.zoom = Math.max(1, this.zoom / 2);
+                this.updateCoordinates();
+                this.render();
+            },
+
+            goToPreset(index) {
+                const preset = this.presets[index];
+                this.centerX = preset.x;
+                this.centerY = preset.y;
+                this.zoom = preset.zoom;
+                this.updateCoordinates();
+                this.render();
+            },
+
+            updateCoordinates() {
+                const coordsEl = document.getElementById('coordinates');
+                coordsEl.textContent = `x: ${this.centerX.toFixed(6)}, y: ${this.centerY.toFixed(6)}, zoom: ${this.zoom.toFixed(0)}x`;
+            },
+
+            downloadImage() {
+                const link = document.createElement('a');
+                link.download = `mandelbrot_${Date.now()}.png`;
+                link.href = this.canvas.toDataURL();
+                link.click();
             },
             
             mandelbrot(cx, cy) {
@@ -759,25 +964,33 @@
             },
             
             render() {
-                const imageData = this.ctx.createImageData(this.width / window.devicePixelRatio, this.height / window.devicePixelRatio);
-                const scale = 3 / this.zoom;
-                const aspectRatio = this.width / this.height;
+                document.getElementById('loadingOverlay').classList.add('active');
+                this.canvas.classList.add('loading');
                 
-                for (let py = 0; py < imageData.height; py++) {
-                    for (let px = 0; px < imageData.width; px++) {
-                        const x0 = this.centerX + (px / imageData.width - 0.5) * scale * aspectRatio;
-                        const y0 = this.centerY + (py / imageData.height - 0.5) * scale;
-                        const n = this.mandelbrot(x0, y0);
-                        const colorFunc = this.palettes[this.currentPalette];
-                        const [r, g, b] = colorFunc(n, this.maxIterations);
-                        const index = (py * imageData.width + px) * 4;
-                        imageData.data[index] = r;
-                        imageData.data[index + 1] = g;
-                        imageData.data[index + 2] = b;
-                        imageData.data[index + 3] = 255;
+                setTimeout(() => {
+                    const imageData = this.ctx.createImageData(this.width / window.devicePixelRatio, this.height / window.devicePixelRatio);
+                    const scale = 3 / this.zoom;
+                    const aspectRatio = this.width / this.height;
+                    
+                    for (let py = 0; py < imageData.height; py++) {
+                        for (let px = 0; px < imageData.width; px++) {
+                            const x0 = this.centerX + (px / imageData.width - 0.5) * scale * aspectRatio;
+                            const y0 = this.centerY + (py / imageData.height - 0.5) * scale;
+                            const n = this.mandelbrot(x0, y0);
+                            const colorFunc = this.palettes[this.currentPalette];
+                            const [r, g, b] = colorFunc(n, this.maxIterations);
+                            const index = (py * imageData.width + px) * 4;
+                            imageData.data[index] = r;
+                            imageData.data[index + 1] = g;
+                            imageData.data[index + 2] = b;
+                            imageData.data[index + 3] = 255;
+                        }
                     }
-                }
-                this.ctx.putImageData(imageData, 0, 0);
+                    
+                    this.ctx.putImageData(imageData, 0, 0);
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                    this.canvas.classList.remove('loading');
+                }, 50);
             }
         };
     </script>
