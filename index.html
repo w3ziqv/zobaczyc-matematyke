@@ -292,6 +292,33 @@
             border: none;
         }
 
+        .control-group select {
+            width: 100%;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #4a5568;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.5rem center;
+        }
+
+        .control-group select:hover {
+            border-color: #667eea;
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
         .control-buttons {
             display: flex;
             gap: 1rem;
@@ -414,6 +441,14 @@
             #fractalCanvas {
                 height: 400px;
             }
+
+            .control-buttons {
+                flex-direction: column;
+            }
+
+            .control-buttons button {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
@@ -424,7 +459,7 @@
             <div class="logo">Zobaczyć Matematykę</div>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
             <ul class="nav-links" id="navLinks">
-                <li><a onclick="showView('home')" class="active">Home</a></li>
+                <li><a onclick="showView('home')" class="active">Główna</a></li>
                 <li><a onclick="showView('theory')">Teoria</a></li>
                 <li><a onclick="showView('visualization')">Wizualizacja</a></li>
                 <li><a onclick="showView('contact')">Kontakt</a></li>
@@ -438,7 +473,7 @@
             <h1>Zobaczyć Matematykę</h1>
             <p>Odkryj piękno liczb zespolonych</p>
             <div class="hero-buttons">
-                <a class="btn btn-primary" onclick="showView('visualization')">Uruchom Wizualizację</a>
+                <a class="btn btn-primary" onclick="showView('visualization')">Uruchom wizualizację</a>
                 <a class="btn btn-secondary" onclick="showView('theory')">Dowiedz się więcej</a>
             </div>
         </div>
@@ -532,7 +567,7 @@
     <div id="visualization" class="view">
         <div class="container">
             <div class="visualization-container">
-                <h2 style="margin-bottom: 1.5rem; color: #1a1a1a;">Interaktywna Wizualizacja</h2>
+                <h2 style="margin-bottom: 1.5rem; color: #1a1a1a;">Interaktywna wizualizacja</h2>
                 <p style="color: #718096; margin-bottom: 1.5rem;">
                     Kliknij na obraz, aby przybliżyć wybrany obszar. Użyj kontrolek poniżej, aby dostosować parametry renderowania.
                 </p>
@@ -546,7 +581,7 @@
                     
                     <div class="control-group">
                         <label>Paleta kolorów:</label>
-                        <select id="colorPalette" class="btn btn-secondary" style="width: 100%; text-align: left; padding: 0.8rem 1.5rem;">
+                        <select id="colorPalette">
                             <option value="classic">Klasyczna</option>
                             <option value="rainbow">Tęczowa</option>
                             <option value="fire">Ogień</option>
@@ -556,8 +591,8 @@
                     </div>
                     
                     <div class="control-buttons">
-                        <button class="btn btn-primary" onclick="fractalApp.reset()">Reset Widoku</button>
-                        <button class="btn btn-secondary" onclick="fractalApp.render()">Przerysuj</button>
+                        <button class="btn btn-primary" onclick="fractalApp.reset()">Resetuj widok</button>
+                        <button class="btn btn-primary" onclick="fractalApp.render()">Przerysuj</button>
                     </div>
                 </div>
             </div>
@@ -578,7 +613,7 @@
                     <strong>Organizator:</strong> Zespół Matematyki Wizualnej
                 </p>
                 <div style="margin-top: 3rem;">
-                    <a class="btn btn-primary" onclick="showView('visualization')">Wróć do Wizualizacji</a>
+                    <a class="btn btn-primary" onclick="showView('visualization')">Wróć do wizualizacji</a>
                 </div>
             </div>
         </div>
@@ -787,7 +822,7 @@
                         imageData.data[index + 1] = g;
                         imageData.data[index + 2] = b;
                         imageData.data[index + 3] = 255;
-                    }
+                    }}
                 }
                 
                 this.ctx.putImageData(imageData, 0, 0);
